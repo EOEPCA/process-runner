@@ -1,0 +1,12 @@
+cwl_old.py
+build
+dist
+__pycache__
+*.pyc
+*.egg-info
+.ipynb_checkpoints
+*.tif
+*.tif
+*.properties
+repo
+

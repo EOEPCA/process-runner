@@ -1,0 +1,9 @@
+name: env_wps3
+channels:
+  - terradue
+  - conda-forge
+dependencies:
+  - pyyaml
+  - click
+  - setuptools
+  - requests
