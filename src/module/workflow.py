@@ -109,7 +109,8 @@ class Workflow():
         std_out, std_err = pipes.communicate()
 
         os.remove(temp_params_file)
-
+        os.remove(temp_cwl_file)
+        
         self.result = json.loads(std_out.decode())
         
         return std_out, std_err

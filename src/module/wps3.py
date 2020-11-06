@@ -93,7 +93,7 @@ def main(ctx, application_package_url, wps_endpoint):
 
         if r.json()['status'] == 'successful':  
 
-            print( r.json()['links'][0]['href'])
+            print(r.json()['links'][0]['href'])
 
             success = True
             
@@ -105,6 +105,13 @@ def main(ctx, application_package_url, wps_endpoint):
 
             sleep(30)
 
+    if not success:
+        
+        print(r.json())
+        
+        sys.exit(1)    
+        
+    # get the results
     r = execution.get_result()
 
     print(r.status_code, r.reason, r.url)
