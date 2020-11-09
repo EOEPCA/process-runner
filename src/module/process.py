@@ -1,6 +1,13 @@
 import os
+import sys
 import json
 import requests
+import logging
+
+logging.basicConfig(stream=sys.stderr, 
+                    level=logging.INFO,
+                    format='%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt='%Y-%m-%dT%H:%M:%S')
 
 class Process:
     
@@ -44,10 +51,13 @@ class Process:
 
     def deploy_process(self, cwl_url):
 
+        print(self._get_deploy_headers())
         r = requests.post(f'{self.endpoint}/{self.namespace}/wps3/processes',
                           json=self._get_deploy_payload(cwl_url),
                           headers=self._get_deploy_headers())
 
+        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
+        
         return r
 
     def get_process(self, process_id=None):
@@ -58,11 +68,15 @@ class Process:
 
             r = requests.get(f'{self.endpoint}/{self.namespace}/wps3/processes',
                                 headers=self._get_headers())
-
+            
+            logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
+            
         else:
 
             r = requests.get(f'{self.endpoint}/{self.namespace}/wps3/processes/{process_id}',
                                 headers=self._get_headers())
+            
+            logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
         
         return r
     
@@ -70,7 +84,9 @@ class Process:
         
         r = self.get_process(process_id)
         
-        if r.status_code == True:
+        #logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
+        
+        if r.status_code == 200:
             
             return True
         
@@ -109,6 +125,8 @@ class Execution:
                              json=execute_request,
                              headers=execution_headers)
 
+        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
+        
         if r.status_code == 201:
             
             self._job_location = r.headers['Location']
@@ -134,6 +152,8 @@ class Execution:
         r = requests.get(f'{self.endpoint}{self._job_location}',
                          headers=self._get_headers(self.token))
         
+        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
+        
         return r
 
     def get_result(self):
@@ -144,5 +164,7 @@ class Execution:
 
         r = requests.get(f'{self.endpoint}/{self._job_location}/result',
                          headers=self._get_headers(self.token))
+        
+        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
         
         return r

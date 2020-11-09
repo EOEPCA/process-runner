@@ -4,7 +4,7 @@ import os
 
 console_scripts = """
 [console_scripts]
-wps3=module.wps3:main
+wps3tool=module.wps3:main
 """
 
 setup(entry_points=console_scripts,
