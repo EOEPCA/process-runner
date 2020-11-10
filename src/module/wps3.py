@@ -10,12 +10,10 @@ from .process import Process
 from .stac import stac_read_method
 from .wps3_helpers import to_execute_inputs, poll_status
 from pystac import *
-#from urllib.parse import urlparse
 import requests
 from requests.auth import HTTPBasicAuth
-#from pystac import STAC_IO
 import uuid
-
+from time import sleep
 
 logging.basicConfig(stream=sys.stderr, 
                     level=logging.INFO,
@@ -24,7 +22,6 @@ logging.basicConfig(stream=sys.stderr,
 
 os.environ['STAGEIN_USERNAME'] = 'eoepca-storage'
 os.environ['STAGEIN_PASSWORD'] = '4k8wMajA5ABaYdk'
-
 
 STAC_IO.read_text_method = stac_read_method
 
@@ -151,8 +148,6 @@ def main(ctx, application_package_url, wps_endpoint, result_method):
     # stage-in the STAC catalog(s)    
     stac_catalog_endpoint = results['stac:catalog']['href']
 
-    
-    
     logging.info(stac_catalog_endpoint)
     
     cat = Catalog.from_file(stac_catalog_endpoint)
@@ -177,15 +172,15 @@ def main(ctx, application_package_url, wps_endpoint, result_method):
         sub_cats.append(thing)
 
     if result_method == 'by-reference':
-        
+        # pass the catalog href 
         for index, _cat in enumerate(sub_cats):
 
-            with open(f'result{index}.stac', 'w') as text_file:
+            with open(f'result_{index}.stac', 'w') as text_file:
 
                 text_file.write(_cat.get_self_href())
                 
     elif result_method == 'by-value':
-        
+        # stage the STAC catalogs locally leaving the assets remote
         for index, _cat in enumerate(sub_cats):
 
             items = []

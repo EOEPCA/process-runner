@@ -4,6 +4,7 @@ import tempfile
 import subprocess
 import json
 import requests
+import lxml.etree as etree
 from urllib.parse import urlparse
 
 cwltool = '/opt/anaconda/bin/cwltool'
@@ -16,9 +17,25 @@ class Workflow():
     
         if parsed.scheme.startswith('http'):
             
-            r = requests.get(cwl_uri)
+            r = requests.get(cwl_uri, stream=True)
             
-            cwl = yaml.safe_load(r.content.decode())
+            if r.headers['Content-Type'] == 'application/atom+xml':
+                
+                namespaces={'atom':'http://www.w3.org/2005/Atom',
+                            'owc':'http://www.opengis.net/owc/1.0'}
+                
+                offering_code = 'http://www.opengis.net/eoc/applicationContext/cwl'
+                
+                xml = etree.parse(r.raw)
+                
+                raw_cwl = xml.xpath(f'/atom:feed/atom:entry/owc:offering[@code="{offering_code}"]/owc:content',
+                                    namespaces=namespaces)[0].text
+                
+                cwl = yaml.safe_load(raw_cwl)
+                
+            else:
+            
+                cwl = yaml.safe_load(r.content.decode())
 
         else: 
             

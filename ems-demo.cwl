@@ -65,15 +65,16 @@ $graph:
       type: string  
     token: 
       type: string
+  
   outputs:
   - id: wf_outputs
     outputSource:
-    - node_1/results
+    - step_1/results
     type: File
   
   steps:
   
-    node_1:
+    step_1:
     
       in:
         inp1: application_package

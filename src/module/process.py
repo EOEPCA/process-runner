@@ -3,6 +3,7 @@ import sys
 import json
 import requests
 import logging
+from time import sleep
 
 logging.basicConfig(stream=sys.stderr, 
                     level=logging.INFO,
@@ -54,6 +55,7 @@ class Process:
                           json=self._get_deploy_payload(cwl_url),
                           headers=self._get_deploy_headers())
 
+        sleep(6)
         logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
         
         return r

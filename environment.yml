@@ -8,3 +8,4 @@ dependencies:
   - setuptools
   - requests
   - pystac
+  - lxml
