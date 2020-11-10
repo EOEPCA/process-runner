@@ -11,12 +11,10 @@ logging.basicConfig(stream=sys.stderr,
 
 class Process:
     
-    def __init__(self, token):
-        
-        self.endpoint = 'http://ades-dev.eoepca.terradue.com' 
-        self.namespace = 'terradue'
+    def __init__(self, token, endpoint):
         
         self.token = token
+        self.endpoint = endpoint         
         
     def _get_deploy_payload(self, url):
 
@@ -52,7 +50,7 @@ class Process:
     def deploy_process(self, cwl_url):
 
         print(self._get_deploy_headers())
-        r = requests.post(f'{self.endpoint}/{self.namespace}/wps3/processes',
+        r = requests.post(f'{self.endpoint}/processes',
                           json=self._get_deploy_payload(cwl_url),
                           headers=self._get_deploy_headers())
 
@@ -66,14 +64,14 @@ class Process:
         
         if process_id is None:
 
-            r = requests.get(f'{self.endpoint}/{self.namespace}/wps3/processes',
+            r = requests.get(f'{self.endpoint}/processes',
                                 headers=self._get_headers())
             
             logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
             
         else:
 
-            r = requests.get(f'{self.endpoint}/{self.namespace}/wps3/processes/{process_id}',
+            r = requests.get(f'{self.endpoint}/processes/{process_id}',
                                 headers=self._get_headers())
             
             logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
@@ -94,77 +92,3 @@ class Process:
             
             return False
 
-class Execution:
-    
-    def __init__(self, token, process_id):
-        
-        self.endpoint = 'http://ades-dev.eoepca.terradue.com' 
-        self.namespace = 'terradue'
-        
-        self.token = token
-        self.process_id = process_id
-        self._job_location = None
-        
-    def execute_process(self, execute_inputs):
-    
-        execution_headers = {'Authorization': f'Bearer {self.token}',
-                           'Content-Type': 'application/json',
-                           'Accept': 'application/json', 
-                           'Prefer': 'respond-async'}
-
-        execute_request = {'inputs': execute_inputs,
-                           'outputs': [{'format': {'mimeType': 'string',
-                                                   'schema': 'string',
-                                                   'encoding': 'string'},
-                                        'id': 'wf_output',
-                                        'transmissionMode': 'value'}],
-                           'mode': 'async',
-                           'response': 'raw'}
-
-        r = requests.post(f'{self.endpoint}/{self.namespace}/wps3/processes/{self.process_id}/jobs',
-                             json=execute_request,
-                             headers=execution_headers)
-
-        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
-        
-        if r.status_code == 201:
-            
-            self._job_location = r.headers['Location']
- 
-        return r
-        
-    def get_job_location(self):
-        
-        return f'{self.endpoint}{self._job_location}'
-    
-    def _get_headers(self, token):
-
-        headers = {'Authorization': f'Bearer {self.token}',
-                   'Content-Type': 'application/json',
-                   'Accept': 'application/json'}
-    
-    def get_status(self):
-
-        if self._job_location is None:
-            
-            return None
-        
-        r = requests.get(f'{self.endpoint}{self._job_location}',
-                         headers=self._get_headers(self.token))
-        
-        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
-        
-        return r
-
-    def get_result(self):
-        
-        if self._job_location is None:
-            
-            return None
-
-        r = requests.get(f'{self.endpoint}/{self._job_location}/result',
-                         headers=self._get_headers(self.token))
-        
-        logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
-        
-        return r

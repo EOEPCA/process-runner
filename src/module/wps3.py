@@ -2,14 +2,15 @@ import click
 import os
 import sys
 import json
-from time import sleep
+
 import logging
 from .execution import Execution
 from .workflow import Workflow
 from .process import Process
-
+from .stac import stac_read_method
+from .wps3_helpers import to_execute_inputs, poll_status
 from pystac import *
-from urllib.parse import urlparse
+#from urllib.parse import urlparse
 import requests
 from requests.auth import HTTPBasicAuth
 #from pystac import STAC_IO
@@ -24,39 +25,8 @@ logging.basicConfig(stream=sys.stderr,
 os.environ['STAGEIN_USERNAME'] = 'eoepca-storage'
 os.environ['STAGEIN_PASSWORD'] = '4k8wMajA5ABaYdk'
 
-def my_read_method(uri):
-    
-    parsed = urlparse(uri)
-    
-    if parsed.scheme.startswith('http'):
-    
-        if os.environ.get('STAGEIN_PASSWORD') is None:
-            
-            return requests.get(uri).text
-            
-        else:
-      
-            return requests.get(uri, 
-                                auth=HTTPBasicAuth(username=os.environ.get('STAGEIN_USERNAME'), 
-                                                   password=os.environ.get('STAGEIN_PASSWORD'))
-                               ).text
-    else:
-        return STAC_IO.default_read_text_method(uri)
 
-STAC_IO.read_text_method = my_read_method
-
-
-def to_execute_inputs(wps_inputs, wps_params):
-    
-    execute_inputs = []
-
-    for _input in wps_inputs:
-
-        execute_inputs.append({'id': _input['id'], 
-                              'input': {'dataType': _input['input']['literalDataDomains'][0]['dataType'],
-                                        'value': wps_params[_input['id']]}})
-
-    return execute_inputs
+STAC_IO.read_text_method = stac_read_method
 
 def check_code(r, http_status):
 
@@ -74,13 +44,14 @@ def check_code(r, http_status):
 ))
 @click.option('--application_package_url')
 @click.option('--wps_endpoint')
+@click.option('--result_method', default='by-reference')
 @click.pass_context
-def main(ctx, application_package_url, wps_endpoint):
+def main(ctx, application_package_url, wps_endpoint, result_method):
     
     _wps_params = {ctx.args[i][2:]: ctx.args[i+1] for i in range(0, len(ctx.args), 2)}
     
     token = os.environ['TOKEN']
-    
+     
     # get process id
     app_package = Workflow(application_package_url)
     process_id = app_package.get_workflow_id()
@@ -88,11 +59,21 @@ def main(ctx, application_package_url, wps_endpoint):
     
     logging.info(f'Process id: {process_id}')
     
-    # check 
-    ades = Process(token)
+    # check is the WPS endpoint provided is ok
+    ades = Process(token=token,
+                   endpoint=wps_endpoint)
     
-    r = ades.get_process()
+    try: 
+        
+        r = ades.get_process()
+    
+    except requests.exceptions.ConnectionError:
+        
+        logging.info(f'Could not contact the WPS endpoint at {wps_endpoint}')
+        
+        sys.exit(1)
    
+
     logging.info(f'Checking if process {process_id} is deployed')
     
     if not ades.is_process_deployed(f'{process_id}'):
@@ -105,21 +86,28 @@ def main(ctx, application_package_url, wps_endpoint):
             
             raise Exception(f'{r.status_code} - Process not deployed, see exception')
     
+            sys.exit(1)
+    
         if not ades.is_process_deployed(process_id):
             
             logging.info(f'Tried to deploy {process_id}, got a 201 but the process is not deployed')
             
             raise Exception(f'{r.status_code} - HTTP code 201 but the process is not deployed')
             
+            sys.exit(1)
+            
     else:
         
-        logging.info(f'Process {process_id} is already deployed')
+        logging.info(f'Process {process_id} is deployed')
         
+    # describe process
     r = ades.get_process(process_id)
     
     if not check_code(r, 200):
         
         raise Exception(f'{r.status_code} - Describe process request failed')
+        
+        sys.exit(1)
     
     # submit execution
     wps_inputs = r.json()['process']['inputs']
@@ -129,88 +117,76 @@ def main(ctx, application_package_url, wps_endpoint):
     
     logging.info(execute_inputs)  
     
-    execution = Execution(token, process_id)
+    execution = Execution(token=token, 
+                          process_id=process_id,
+                          endpoint=wps_endpoint)
     
     r = execution.execute_process(execute_inputs)
 
-    # status monitoring
-    r = execution.get_status()
-    job_id = r.json()['jobID']
-    logging.info(f'Polling status at {r.url} for job id: {job_id}')
-    
-    #logging.info(r.status_code, r.reason, r.url)
-    
-    success = False
-    
-    while r.json()['status'] == 'running':
-
-        r = execution.get_status()
-
-        if r.json()['status'] == 'failed': 
-
-            logging.info(r.json())
-
-            break
-
-        if r.json()['status'] == 'successful':  
-
-            logging.info(r.json()['links'][0]['href'])
-
-            success = True
-            
-            break
-
-        else:
-            progress = r.json()['progress']
-            status = r.json()['status']
-            
-            logging.info(f'Polling - {status}, {progress} %')
-            
-            sleep(30)
-
-    if not success:
+    if not check_code(r, 201):
         
-        logging.info(r.json())
+        raise Exception(f'{r.status_code} - Execute request failed')
+        
+        sys.exit(1)
+    
+    # status monitoring
+    success = execution.monitor(30)
+    
+    if not success:
+    
+        logging.info('Processing failed')
         
         sys.exit(1)    
         
     # get the results
-    r = execution.get_result()
 
-    logging.info(r.status_code, r.reason, r.url)
-
-    if success: 
+    results = execution.get_results()
+ 
+    if 'stac:catalog' not in results.keys():
         
-        results = json.loads(r.json()['outputs'][0]['value']['inlineValue'])
+        logging.info('The job didn\'t produce a STAC catalog')
+        
+        sys.exit(1)
+        
+    # stage-in the STAC catalog(s)    
+    stac_catalog_endpoint = results['stac:catalog']['href']
 
-        #logging.info(results)
-
-        stac_catalog_endpoint = results['stac:catalog']['href']
-
-        logging.info(stac_catalog_endpoint)
     
-        cat = Catalog.from_file(stac_catalog_endpoint)
-        sub_cats = []
+    
+    logging.info(stac_catalog_endpoint)
+    
+    cat = Catalog.from_file(stac_catalog_endpoint)
 
-        try:
-            next(cat.get_children())
+    sub_cats = []
 
-            for thing in cat.get_children():
+    try:
+        next(cat.get_children())
+        for thing in cat.get_children():
 
-                try:
+            try:
 
-                    next(thing.get_children())
+                next(thing.get_children())
 
-                except StopIteration:
+            except StopIteration:
 
-                    sub_cats.append(thing)
-                    continue
+                sub_cats.append(thing)
+                continue
 
-        except StopIteration:
+    except StopIteration:
 
-            sub_cats.append(thing)
+        sub_cats.append(thing)
+
+    if result_method == 'by-reference':
         
-        for _cat in sub_cats:
+        for index, _cat in enumerate(sub_cats):
+
+            with open(f'result{index}.stac', 'w') as text_file:
+
+                text_file.write(_cat.get_self_href())
+                
+    elif result_method == 'by-value':
+        
+        for index, _cat in enumerate(sub_cats):
 
             items = []
 
@@ -223,12 +199,22 @@ def main(ctx, application_package_url, wps_endpoint):
 
             catalog.add_items(items)
 
-            catalog.normalize_and_save(root_href=str(uuid.uuid1()),
-                                       catalog_type=CatalogType.RELATIVE_PUBLISHED)
+            if len(sub_cats) == 1:
+
+                catalog.normalize_and_save(root_href='./',
+                                           catalog_type=CatalogType.RELATIVE_PUBLISHED)
+            else:
+
+                catalog.normalize_and_save(root_href=str(uuid.uuid1()),
+                                           catalog_type=CatalogType.RELATIVE_PUBLISHED)
 
             catalog.describe()
 
+    else:
         
+        raise Exception(f'method method {result_method} not supported')
+        
+        sys.exit(1)
     
 if __name__ == '__main__':
     main()
