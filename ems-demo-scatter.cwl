@@ -5,7 +5,7 @@ $graph:
   class: CommandLineTool
   hints:
     DockerRequirement:
-      dockerPull: eoepca/wps3-runner:0.1
+      dockerPull: wps3-runner:0.1
   
   id: wps3
   
@@ -42,7 +42,7 @@ $graph:
   requirements:
     EnvVarRequirement:
       envDef:
-        PATH: /opt/anaconda/envs/env_wps3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        PATH: /srv/conda/envs/env_wps3/bin:/opt/anaconda/envs/env_wps3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         TOKEN: $(inputs.inp5)
     ResourceRequirement: {}
 
