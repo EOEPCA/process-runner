@@ -6,13 +6,18 @@ import json
 import requests
 import lxml.etree as etree
 from urllib.parse import urlparse
-
-cwltool = '/opt/anaconda/bin/cwltool'
+from .conf import read_configuration
+from .doi import doi_resolver
 
 class Workflow():
     
-    def __init__(self, cwl_uri):
+    def __init__(self, cwl_uri, conf):
 
+        configuration = read_configuration(conf)
+        
+        self.zenodo_token = configuration['zenodo']['token']
+        self.cwltool  = configuration['cwltool']
+            
         parsed = urlparse(cwl_uri)
     
         if parsed.scheme.startswith('http'):
@@ -48,11 +53,20 @@ class Workflow():
         
     def _read_cwl(self, cwl_file):
     
-        with open(cwl_file) as file:
+        if os.path.isfile(cwl_file):
+            
+            with open(cwl_file) as file:
 
-            cwl = yaml.load(file,
-                        Loader=yaml.FullLoader)
+                cwl = yaml.load(file,
+                            Loader=yaml.FullLoader)
 
+        else:
+            
+            r = requests.get(doi_resolver(cwl_file, self.zenodo_token),
+                            params={'access_token': self.zenodo_token})
+            
+            cwl = yaml.safe_load(r.text)
+        
         return cwl
         
     def get_workflow_class(self):
@@ -110,7 +124,7 @@ class Workflow():
                       default_flow_style=False)
 
         # invoke cwltool
-        cmd_args = [cwltool, 
+        cmd_args = [self.cwltool, 
                     '--no-read-only',
                     '--no-match-user',
                     '{}#{}'.format(temp_cwl_file, 

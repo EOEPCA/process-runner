@@ -9,6 +9,7 @@ from .workflow import Workflow
 from .process import Process
 from .stac import stac_read_method
 from .wps3_helpers import to_execute_inputs, poll_status
+from .conf import read_configuration
 from pystac import *
 import requests
 from requests.auth import HTTPBasicAuth
@@ -19,9 +20,6 @@ logging.basicConfig(stream=sys.stderr,
                     level=logging.INFO,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%dT%H:%M:%S')
-
-os.environ['STAGEIN_USERNAME'] = 'eoepca-storage'
-os.environ['STAGEIN_PASSWORD'] = '4k8wMajA5ABaYdk'
 
 STAC_IO.read_text_method = stac_read_method
 
@@ -34,7 +32,7 @@ def check_code(r, http_status):
     else: 
         
         return False
-    
+        
 @click.command(name='wps3', context_settings=dict(
     ignore_unknown_options=True,
     allow_extra_args=True,
@@ -42,15 +40,18 @@ def check_code(r, http_status):
 @click.option('--application_package_url')
 @click.option('--wps_endpoint')
 @click.option('--result_method', default='by-reference')
+@click.option('--conf', default=None)
 @click.pass_context
-def main(ctx, application_package_url, wps_endpoint, result_method):
+def main(ctx, application_package_url, wps_endpoint, result_method, conf):
     
-    _wps_params = {ctx.args[i][2:]: ctx.args[i+1] for i in range(0, len(ctx.args), 2)}
+    configuration = read_configuration(conf)
     
+    os.environ['STAGEIN_USERNAME'] = configuration['stage-in']['username']
+    os.environ['STAGEIN_PASSWORD'] = configuration['stage-in']['password']
     token = os.environ['TOKEN']
      
     # get process id
-    app_package = Workflow(application_package_url)
+    app_package = Workflow(application_package_url, conf)
     process_id = app_package.get_workflow_id()
     process_id = f'{process_id}_'.replace('-', '_')
     
@@ -112,6 +113,8 @@ def main(ctx, application_package_url, wps_endpoint, result_method):
     # submit execution
     wps_inputs = r.json()['process']['inputs']
     
+    _wps_params = {ctx.args[i][2:]: ctx.args[i+1] for i in range(0, len(ctx.args), 2)}
+        
     execute_inputs = to_execute_inputs(wps_inputs, 
                                        _wps_params)
     
