@@ -1,72 +1,75 @@
 $graph:
-- baseCommand: wps3tool
+- baseCommand: burned-area-delineation
   class: CommandLineTool
   hints:
     DockerRequirement:
-      dockerPull: wps3-runner:0.1
+      dockerPull: terradue/nb-burned-area-delineation:latest
   
-  id: wps3_delineation
+  id: delineation
 
   inputs:
-  
     inp1:
       inputBinding:
         position: 1
-        prefix: --application_package_url
-      type: string
+        prefix: --pre_event
+        valueFrom: $(inputs.inp1[0])
+      type: Directory[]
     inp2:
       inputBinding:
         position: 2
-        prefix: --wps_endpoint
-      type: string
+        prefix: --post_event
+        valueFrom: $(inputs.inp2[1])
+      type: Directory[]
     inp3:
       inputBinding:
         position: 3
-        prefix: --pre_event
-        valueFrom: $(inputs.inp3[0])
-      type: Directory[]
+        prefix: --ndvi_threshold
+      type: string
     inp4:
       inputBinding:
         position: 4
-        prefix: --post_event
-        valueFrom: $(inputs.inp4[1])
-      type: Directory[]
-    inp5:
-      inputBinding:
-        position: 5
-        prefix: --ndvi_threshold
-      type: string
-    inp6:
-      inputBinding:
-        position: 6
         prefix: --ndwi_threshold
       type: string
-    inp7:
-      type: string
-      
-  outputs:
+    inp5:
+       inputBinding:
+         position: 5
+         prefix: --store_username
+       type: string
+    inp6:
+       inputBinding:
+         position: 6
+         prefix: --store_apikey
+       type: string
   
+  outputs:
     results:
       outputBinding:
         glob: .
       type: Directory
-      
+  
   requirements:
+    InlineJavascriptRequirement: {}
     EnvVarRequirement:
-      envDef:
-        PATH: /opt/anaconda/envs/env_burned_area_delineation/bin:/opt/anaconda/envs/env_burned_area_delineation/bin:/opt/anaconda/envs/env_default/bin:/opt/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-        PREFIX: /opt/anaconda/envs/env_burned_area_delineation
-        TOKEN: $(inputs.inp7)
+        envDef:
+          PATH: /opt/anaconda/envs/env_burned_area_delineation/bin:/opt/anaconda/envs/env_burned_area_delineation/bin:/opt/anaconda/envs/env_default/bin:/opt/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          PREFIX: /opt/anaconda/envs/env_burned_area_delineation
+  
     ResourceRequirement: {}
 #  stderr: std.err
 #  stdout: std.out
 
 - baseCommand: wps3tool
   class: CommandLineTool
+  
   hints:
     DockerRequirement:
-      dockerPull: eoepca/wps3-runner:0.1
+      dockerPull: wps3-runner:0.1
   
+  arguments:
+        - position: 1
+          prefix: --result_method
+          valueFrom: 'by-value'
+          
   id: wps3_vegetation_index
   
   inputs:
@@ -102,7 +105,7 @@ $graph:
   requirements:
     EnvVarRequirement:
       envDef:
-        PATH: /opt/anaconda/envs/env_wps3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        PATH: /srv/conda/envs/env_wps3/bin:/opt/anaconda/envs/env_wps3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         TOKEN: $(inputs.inp5)
     ResourceRequirement: {}
 
@@ -130,13 +133,15 @@ $graph:
       type: string
     application_package_vi:
       type: string
-    application_package_del:
-      type: string
     wps_endpoint:
       type: string  
     token: 
       type: string
-  
+    store_username:
+      type: string
+    store_apikey:
+      type: string
+     
   outputs:
   - id: wf_outputs
     outputSource:
@@ -170,17 +175,15 @@ $graph:
     delineation:
     
       in:
-        inp1: application_package_del
-        inp2: wps_endpoint
-        inp3: vegetation-index/results
-        inp4: vegetation-index/results
-        inp5: ndvi_threshold
-        inp6: ndwi_threshold
-        inp7: token
-    
+        inp1: vegetation-index/results
+        inp2: vegetation-index/results
+        inp3: ndvi_threshold
+        inp4: ndwi_threshold
+        inp5: store_username
+        inp6: store_apikey
       out:
       - results
       
-      run: '#wps3_delineation'
+      run: '#delineation'
       
 cwlVersion: v1.0
