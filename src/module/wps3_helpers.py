@@ -1,6 +1,8 @@
 import sys
 import logging
+import requests
 from time import sleep
+from urllib.parse import urlparse
 
 logging.basicConfig(stream=sys.stderr, 
                     level=logging.INFO,
@@ -20,13 +22,19 @@ def to_execute_inputs(wps_inputs, wps_params):
     return execute_inputs
 
 
-def poll_status(r, interval=30):
+def poll_status(endpoint, location, interval=30):
+    
+    parsed = urlparse(endpoint)
+        
+    _endpoint = f'{parsed[0]}://{parsed[1]}'
+            
+    r = requests.get(f'{_endpoint}/{location}')
     
     success = False
     
     while r.json()['status'] == 'running':
 
-        r = execution.get_status()
+        r = requests.get(f'{_endpoint}/{location}')
 
         if r.json()['status'] == 'failed': 
 
@@ -34,19 +42,15 @@ def poll_status(r, interval=30):
 
             break
 
-        if r.json()['status'] == 'successful':  
-
-            logging.info(r.json()['links'][0]['href'])
+        if r.json()['status'] == 'done':  
 
             success = True
             
             break
 
         else:
-            progress = r.json()['progress']
-            status = r.json()['status']
             
-            logging.info(f'Polling - {status}, {progress} %')
+            logging.info(f'Sleep {interval} seconds')
             
             sleep(interval)
 

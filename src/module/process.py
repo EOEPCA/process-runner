@@ -50,12 +50,10 @@ class Process:
 
     def deploy_process(self, cwl_url):
 
-        print(self._get_deploy_headers())
         r = requests.post(f'{self.endpoint}/processes',
                           json=self._get_deploy_payload(cwl_url),
                           headers=self._get_deploy_headers())
 
-        sleep(6)
         logging.info('{} - {}, {}'.format(r.status_code, r.reason, r.url))
         
         return r

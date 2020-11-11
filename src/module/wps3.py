@@ -85,6 +85,9 @@ def main(ctx, application_package_url, wps_endpoint, result_method):
     
             sys.exit(1)
     
+        poll_status(wps_endpoint, r.headers['Location'], 3)
+    
+    
         if not ades.is_process_deployed(process_id):
             
             logging.info(f'Tried to deploy {process_id}, got a 201 but the process is not deployed')
