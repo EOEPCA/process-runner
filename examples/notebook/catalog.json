@@ -1,0 +1,22 @@
+{
+    "id": "catalog-S2A_MSIL2A_20191216T004701_N0213_R102_T53HPA_20191216T024808",
+    "stac_version": "1.0.0-beta.2",
+    "description": "Results",
+    "links": [
+        {
+            "rel": "root",
+            "href": "./catalog.json",
+            "type": "application/json"
+        },
+        {
+            "rel": "item",
+            "href": "./INDEX_S2A_MSIL2A_20191216T004701_N0213_R102_T53HPA_20191216T024808/INDEX_S2A_MSIL2A_20191216T004701_N0213_R102_T53HPA_20191216T024808.json",
+            "type": "application/json"
+        },
+        {
+            "rel": "self",
+            "href": "/workspace/ogc-tb16/wps3-client/examples/notebook/catalog.json",
+            "type": "application/json"
+        }
+    ]
+}

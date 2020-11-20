@@ -14,7 +14,7 @@ $graph:
       inputBinding:
         position: 1
         prefix: --application_package_url
-      type: string
+      type: File
     inp2:
       inputBinding:
         position: 2
@@ -23,14 +23,19 @@ $graph:
     inp3:
       inputBinding:
         position: 3
-        prefix: --input_reference
-      type: string
+        prefix: --conf
+      type: File
     inp4:
       inputBinding:
         position: 4
-        prefix: --aoi
+        prefix: --input_reference
       type: string
     inp5:
+      inputBinding:
+        position: 5
+        prefix: --aoi
+      type: string
+    inp6:
       type: string
   outputs:
     results:
@@ -60,12 +65,13 @@ $graph:
       label: Sentinel-2 Level-2 catalog reference
       type: string
     application_package:
-      type: string
+      type: File
     wps_endpoint:
       type: string  
     token: 
       type: string
-  
+    conf: 
+      type: File
   outputs:
   - id: wf_outputs
     outputSource:
@@ -79,9 +85,11 @@ $graph:
       in:
         inp1: application_package
         inp2: wps_endpoint
-        inp3: input_reference
-        inp4: aoi
-        inp5: token    
+        inp3: conf
+        inp4: input_reference
+        inp5: aoi
+        inp6: token
+        
       out:
       - results
       

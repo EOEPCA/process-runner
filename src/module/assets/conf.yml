@@ -1,8 +1,0 @@
-stage-in:
-    username: 'eoepca-storage'
-    password: '4k8wMajA5ABaYdk'
-
-zenodo:
-    token: '1EE1GKSAmYVQOzxBDFbzfGf9Ak6Qxnans8NV4iznKFGaxPGKGBUx50q00cw3'
-    
-cwltool: '/opt/anaconda/bin/cwltool'

@@ -6,15 +6,15 @@ def package_files(where):
     for directory in where:
         for (path, directories, filenames) in os.walk(directory):
             for filename in filenames:
-                paths.append(os.path.join(path, filename).replace('src/module/', ''))
+                paths.append(os.path.join(path, filename).replace('src/wps3_client/', ''))
     return paths
 
 
-extra_files = package_files(['src/module/assets'])
+extra_files = package_files(['src/wps3_client/assets'])
 
 console_scripts = """
 [console_scripts]
-wps3tool=module.wps3:main
+wps3tool=wps3_client.wps3:entry
 """
 
 setup(entry_points=console_scripts,
