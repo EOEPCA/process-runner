@@ -29,7 +29,7 @@ ENV APP_BASE=/srv
 
 ENV CONDA_DIR=${APP_BASE}/conda 
     
-ENV NB_PYTHON_PREFIX=${CONDA_DIR}/envs/env_wps3 
+ENV NB_PYTHON_PREFIX=${CONDA_DIR}/envs/env_process
 
 ENV KERNEL_PYTHON_PREFIX=${NB_PYTHON_PREFIX} \
     PATH=${NB_PYTHON_PREFIX}/bin:${CONDA_DIR}/bin:${NPM_DIR}/bin:${PATH}
@@ -45,7 +45,7 @@ RUN bash /tmp/install-miniforge.bash && rm /tmp/install-miniforge.bash /tmp/envi
 
 COPY --chown=1000:100 . ${HOME}
 
-RUN cd ${HOME} && /srv/conda/envs/env_wps3/bin/python setup.py install
+RUN cd ${HOME} && /srv/conda/envs/env_process/bin/python setup.py install
 
 RUN echo '195.201.250.29  ades-dev.eoepca.terradue.com' >> /etc/hosts
 

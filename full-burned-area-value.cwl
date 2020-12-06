@@ -43,16 +43,16 @@ $graph:
   stderr: std.err
   stdout: std.out
   
-- baseCommand: wps3tool
+- baseCommand: process-runner
   class: CommandLineTool
   hints:
     DockerRequirement:
-      dockerPull: wps3-runner:0.1
+      dockerPull: process-runner:0.1
   arguments:
         - position: 1
           prefix: --result_method
           valueFrom: 'by-value'
-  id: wps3_vegetation_index
+  id: process_vegetation_index
   
   inputs:
     inp1:
@@ -63,7 +63,7 @@ $graph:
     inp2:
       inputBinding:
         position: 3
-        prefix: --wps_endpoint
+        prefix: --process_endpoint
       type: string
     inp3:
       inputBinding:
@@ -87,7 +87,7 @@ $graph:
   requirements:
     EnvVarRequirement:
       envDef:
-        PATH: /opt/anaconda/envs/env_wps3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        PATH: /opt/anaconda/envs/env_process/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         TOKEN: $(inputs.inp5)
     ResourceRequirement: {}
 
@@ -115,7 +115,7 @@ $graph:
       type: string
     application_package_vi:
       type: string
-    wps_endpoint:
+    process_endpoint:
       type: string  
     token: 
       type: string
@@ -136,7 +136,7 @@ $graph:
     
       in:
         inp1: application_package_vi
-        inp2: wps_endpoint
+        inp2: process_endpoint
         inp3: input_reference
         inp4: aoi
         inp5: token    
@@ -147,7 +147,7 @@ $graph:
       scatter: inp3
       scatterMethod: dotproduct
       
-      run: '#wps3_vegetation_index'
+      run: '#process_vegetation_index'
       
       
     delineation:

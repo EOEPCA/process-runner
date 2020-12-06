@@ -1,4 +1,4 @@
-name: env_wps3
+name: env_process
 channels:
   - terradue
   - conda-forge
