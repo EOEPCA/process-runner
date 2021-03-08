@@ -144,19 +144,21 @@ def main(process_params, application_package_url, process_endpoint, result_metho
 
     results = execution.get_results()
 
-    if 'stac:catalog' not in results.keys():
+    if 'StacCatalogUri' not in results.keys():
         logging.info('The job didn\'t produce a STAC catalog')
 
         sys.exit(1)
 
     # stage-in the STAC catalog(s)    
-    stac_catalog_endpoint = results['stac:catalog']['href']
+    stac_catalog_endpoint = results['StacCatalogUri']
 
     logging.info(stac_catalog_endpoint)
 
     cat = Catalog.from_file(stac_catalog_endpoint)
-
+    print(cat)
     sub_cats = []
+
+    thing = None
 
     try:
         next(cat.get_children())
@@ -173,7 +175,7 @@ def main(process_params, application_package_url, process_endpoint, result_metho
 
     except StopIteration:
 
-        sub_cats.append(thing)
+        sub_cats.append(cat)
 
     if result_method == 'by-reference':
 

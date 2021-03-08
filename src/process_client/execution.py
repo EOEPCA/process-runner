@@ -33,7 +33,7 @@ class Execution:
                            'outputs': [{'format': {'mimeType': 'string',
                                                    'schema': 'string',
                                                    'encoding': 'string'},
-                                        'id': 'wf_output',
+                                        'id': 'wf_outputs',
                                         'transmissionMode': 'value'}],
                            'mode': 'async',
                            'response': 'raw'}
@@ -123,7 +123,7 @@ class Execution:
                 success = True
 
                 r = self.get_result()
-
+                print(r.json())
                 if len(r.json()['outputs']) == 1:
 
                     if 'value' in r.json()['outputs'][0].keys():

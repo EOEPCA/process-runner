@@ -9,3 +9,5 @@ dependencies:
   - requests
   - pystac
   - lxml
+  - botocore
+  - boto3
