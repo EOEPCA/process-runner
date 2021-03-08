@@ -57,8 +57,9 @@ def main(process_params, application_package_url, process_endpoint, result_metho
 
     # get process id
     app_package = Workflow(application_package_url, conf)
-    process_id = app_package.get_workflow_id()
-    process_id = f'{process_id}_'.replace('-', '_')
+    #process_id = app_package.get_workflow_id()
+    process_id = app_package.get_identifier()
+    #process_id = f'{process_id}_'.replace('-', '_')
 
     logging.info(f'Process id: {process_id}')
 

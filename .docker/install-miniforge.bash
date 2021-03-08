@@ -28,9 +28,8 @@ export PATH="${CONDA_DIR}/bin:$PATH"
 
 # Preserve behavior of miniconda - packages come from conda-forge + defaults
 conda config --system --append channels defaults
-conda config --system --append channels https://conda.binstar.org/terradue
-conda config --system --append channels https://conda.binstar.org/eoepca
-conda config --system --append channels https://conda.binstar.org/r
+conda config --system --append channels terradue
+conda config --system --append channels eoepca
 
 # Do not attempt to auto update conda or dependencies
 conda config --system --set auto_update_conda false
@@ -42,9 +41,11 @@ echo 'update_dependencies: false' >> ${CONDA_DIR}/.condarc
 # avoid future changes to default channel_priority behavior
 conda config --system --set channel_priority "flexible"
 
+conda install -n base -y mamba
+
 echo "installing notebook env:"
 cat /tmp/environment.yml
-conda env create -p ${NB_PYTHON_PREFIX} -f /tmp/environment.yml
+mamba env create -p ${NB_PYTHON_PREFIX} -f /tmp/environment.yml
 
 # empty conda history file,
 # which seems to result in some effective pinning of packages in the initial env,

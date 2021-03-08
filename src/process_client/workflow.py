@@ -51,6 +51,16 @@ class Workflow:
         self.cwl_uri = cwl_uri
         self.result = None
 
+    def get_identifier(self):
+
+        for elem in self.cwl["$graph"]:
+
+            if elem["class"] == "Workflow":
+                workflow_id = elem['id']
+
+        return '{}-{}'.format(workflow_id, self.cwl['s:softwareVersion'].replace('.', '_'))
+
+
     def _read_cwl(self, cwl_file):
 
         if os.path.isfile(cwl_file):
