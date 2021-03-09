@@ -58,8 +58,8 @@ $graph:
       envDef:
         PATH: /srv/conda/envs/env_process/bin:/opt/anaconda/envs/env_process/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         TOKEN: $(inputs.inp6)
-        AWS_SECRET_ACCESS_KEY: $(inputs.inp7)
-        AWS_ACCESS_KEY_ID: $(inputs.inp8)
+        AWS_ACCESS_KEY_ID: $(inputs.inp7)
+        AWS_SECRET_ACCESS_KEY: $(inputs.inp8)
     ResourceRequirement: {}
     InlineJavascriptRequirement: {}
 
@@ -87,9 +87,9 @@ $graph:
       type: string  
     token: 
       type: string
-    s3k1:
+    access_key:
       type: string
-    s3k2:
+    secret_key:
       type: string   
   outputs:
   - id: wf_outputs
@@ -114,8 +114,8 @@ $graph:
         inp4: s_expression
         inp5: cbn   
         inp6: token
-        inp7: s3k1
-        inp8: s3k2 
+        inp7: access_key
+        inp8: secret_key 
       
       out:
       - results
